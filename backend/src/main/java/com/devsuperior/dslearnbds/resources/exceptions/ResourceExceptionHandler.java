@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.devsuperior.dslearnbds.services.exceptions.DatabaseException;
+import com.devsuperior.dslearnbds.services.exceptions.ForbiddenException;
 import com.devsuperior.dslearnbds.services.exceptions.ResourceNotFoundException;
+import com.devsuperior.dslearnbds.services.exceptions.UnauthorizedException;
 
 // Essa classe serve para não ter que escrever um try..catch em todos os métodos do controlador que precisar tratar uma exceção.
 // Ela irá interceptar as exceções que ocorrem no controlador e vai dar o tratamento adequado para ela.
@@ -25,7 +27,7 @@ public class ResourceExceptionHandler {
 	// @ExceptionHandler  -> Define que irá interceptar uma exceção. O parâmetro é o tipo de exceção que deverá ser interceptada.
 	
 	@ExceptionHandler(ResourceNotFoundException.class)
-	public ResponseEntity<StandardError> entityNotFound( ResourceNotFoundException e, HttpServletRequest request ) {
+	public ResponseEntity<StandardError> entityNotFound(ResourceNotFoundException e, HttpServletRequest request) {
 		
 		StandardError err = new StandardError();
 		err.setTimestamp(Instant.now());
@@ -37,7 +39,7 @@ public class ResourceExceptionHandler {
 	}
 	
 	@ExceptionHandler(DatabaseException.class)
-	public ResponseEntity<StandardError> database( DatabaseException e, HttpServletRequest request ) {
+	public ResponseEntity<StandardError> database(DatabaseException e, HttpServletRequest request) {
 		
 		StandardError err = new StandardError();
 		err.setTimestamp(Instant.now());
@@ -49,7 +51,7 @@ public class ResourceExceptionHandler {
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ValidationError> validation( MethodArgumentNotValidException e, HttpServletRequest request ) {
+	public ResponseEntity<ValidationError> validation(MethodArgumentNotValidException e, HttpServletRequest request) {
 		
 		ValidationError err = new ValidationError();
 		err.setTimestamp(Instant.now());
@@ -63,5 +65,17 @@ public class ResourceExceptionHandler {
 		}
 		
 		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(err);
+	}
+	
+	@ExceptionHandler(ForbiddenException.class)
+	public ResponseEntity<OAuthCustomError> forbidden(ForbiddenException e, HttpServletRequest request) {
+		OAuthCustomError err = new OAuthCustomError("Fornidden", e.getMessage());
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(err);
+	}
+	
+	@ExceptionHandler(UnauthorizedException.class)
+	public ResponseEntity<OAuthCustomError> unauthorized(UnauthorizedException e, HttpServletRequest request) {
+		OAuthCustomError err = new OAuthCustomError("Unauthorized", e.getMessage());
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(err);
 	}
 }
