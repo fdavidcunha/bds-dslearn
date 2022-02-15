@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -37,6 +38,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Autowired private JwtTokenStore           tokenStore;
 	@Autowired private AuthenticationManager   authenticationManager;
 	@Autowired private JWTTokenEnhancer        tokenEnhancer;  
+	@Autowired private UserDetailsService      userDetailService;
 	
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
@@ -47,12 +49,13 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
 		// Define como que vai ser a autenticação e quais serão os dados do cliente.
 
-		clients.inMemory()                                // Define que o processo ocorrerá em memória.
-			.withClient(clientId)                         // ID da aplicação. Serivá para se comunicar com o backend.
-			.secret(passwordEncoder.encode(clientSecret)) // Senha da aplicação.
-			.scopes("read", "write")                      // Define que a aplicação terá acesso de leitura e escrita.
-			.authorizedGrantTypes("password")             // Tipo de acesso/login.
-			.accessTokenValiditySeconds(jwtDuration);     // Tempo de expiração do token (em segundos).
+		clients.inMemory()                                     // Define que o processo ocorrerá em memória.
+			.withClient(clientId)                              // ID da aplicação. Serivá para se comunicar com o backend.
+			.secret(passwordEncoder.encode(clientSecret))      // Senha da aplicação.
+			.scopes("read", "write")                           // Define que a aplicação terá acesso de leitura e escrita.
+			.authorizedGrantTypes("password", "refresh_token") // Tipo de acesso/login.
+			.accessTokenValiditySeconds(jwtDuration)
+			.refreshTokenValiditySeconds(jwtDuration);         // Tempo de expiração do token (em segundos).
 	}
 
 	@Override
@@ -65,6 +68,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 		endpoints.authenticationManager(authenticationManager) // Define quem vai autorizar e qual será o formato do token.
 			.tokenStore(tokenStore)                            // Define quais serão os objetos responsáveis por processar o token.
 			.accessTokenConverter(accessTokenConverter)
-			.tokenEnhancer(chain);
+			.tokenEnhancer(chain)
+			.userDetailsService(userDetailService);
 	}
 }
